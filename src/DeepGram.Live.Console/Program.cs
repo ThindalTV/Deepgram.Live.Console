@@ -6,36 +6,44 @@ var deepgramApiKey = "SET YOUR KEY HERE";
 Console.WriteLine("Starting Deepgram live console.");
 Console.WriteLine();
 
+// Get the audio device to use for recording.
 var recordingDeviceId = Audio.GetRecordingDeviceId();
 if (recordingDeviceId < 0)
 {
     return;
 }
 
+// Setup the Deepgram connection and the NAudio audio capture.
 using (var deepgramLive = new DeepgramLive(deepgramApiKey, HandleTranscription))
 using (var audioCapture = new Audio(availableBytes => AudioAvailable(deepgramLive, availableBytes)))
 {
+    // Start the Deepgram connection and the audio capture.
     await deepgramLive.Start();
     audioCapture.Start(recordingDeviceId);
 
-    // Setup Keepalive
+    // Setup Deepgram keepalive
     var keepAliveTimer = new Timer(_ =>
     {
         deepgramLive.KeepAlive();
     }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
 
+    // Ready to run. Wait for keypress.
     Console.WriteLine("Starting transcription.");
     Console.WriteLine("Press any key to exit.");
     Console.ReadKey();
     Console.WriteLine("Exit requested. Shutting down.");
 
-    // Stop the keepalive timer.
+    // Stop the Deepgram keepalive timer.
     keepAliveTimer.Change(Timeout.Infinite, Timeout.Infinite);
     keepAliveTimer.Dispose();
 
+    // Stop the Deepgram connection and the audio capture.
     audioCapture.Stop();
     await deepgramLive.Stop();
 }
+
+Console.WriteLine("Deepgram live console stopped.");
+// ----------------------------------------------------------------------------------------------
 
 /// <summary>
 /// Callback for when audio is available from the recording device.
